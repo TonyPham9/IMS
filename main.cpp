@@ -21,7 +21,7 @@ typedef struct army_base {
     string name_of_base;
     long soldiers = 0;
     long vehicles = 0;
-    double time_of_first = 0;
+    double path_duration = 0;
 } base;
 
 /**
@@ -104,9 +104,9 @@ class Vehicle : public Process {
             }
 
             Release(platform);
-            Wait(cities[actual_base].time_of_first);
+            Wait(cities[actual_base].path_duration);
             city += 40;
-            Wait(cities[actual_base].time_of_first);
+            Wait(cities[actual_base].path_duration);
         }
     };
 };
@@ -175,97 +175,97 @@ int main(int argc, char *argv[]) {
         switch (i) {
             case 0: // Bechyne
                 cities[i].name_of_base = "Bechyne";
-                cities[i].time_of_first = Exponential(120);
+                cities[i].path_duration = Exponential(120);
                 cities[i].soldiers = (2 * prapor_min) + (rand() % (2 * prapor_max - 2 * prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 1: // Bucovice
                 cities[i].name_of_base = "Bechyne";
-                cities[i].time_of_first = Exponential(29);
+                cities[i].path_duration = Exponential(29);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 2: // Hranice
                 cities[i].name_of_base = "Hranice";
-                cities[i].time_of_first = Exponential(16);
+                cities[i].path_duration = Exponential(16);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 3: // Chrudim
                 cities[i].name_of_base = "Chrudim";
-                cities[i].time_of_first = Exponential(87);
+                cities[i].path_duration = Exponential(87);
                 cities[i].soldiers = pluk_min + (rand() % (pluk_max - pluk_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 4: // Jince
                 cities[i].name_of_base = "Jince";
-                cities[i].time_of_first = Exponential(167);
+                cities[i].path_duration = Exponential(167);
                 cities[i].soldiers = pluk_min + (rand() % (pluk_max - pluk_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 5: // Jindruchuv_hradec
                 cities[i].name_of_base = "Jindruchuv_hradec";
-                cities[i].time_of_first = Exponential(108);
+                cities[i].path_duration = Exponential(108);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 6: // Klatovy
                 cities[i].name_of_base = "Klatovy";
-                cities[i].time_of_first = Exponential(220);
+                cities[i].path_duration = Exponential(220);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 7: // Liberec
                 cities[i].name_of_base = "Liberec";
-                cities[i].time_of_first = Exponential(190);
+                cities[i].path_duration = Exponential(190);
                 cities[i].soldiers = (2 * prapor_min) + (rand() % (2 * prapor_max - 2 * prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 8: // Lipnik_nad_becvou
                 cities[i].name_of_base = "Lipnik_nad_becvou";
-                cities[i].time_of_first = Exponential(24);
+                cities[i].path_duration = Exponential(24);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 9: // Olomouc
                 cities[i].name_of_base = "Olomouc";
-                cities[i].time_of_first = Exponential(45);
+                cities[i].path_duration = Exponential(45);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 10: // Opava
                 cities[i].name_of_base = "Opava";
-                cities[i].time_of_first = Exponential(38);
+                cities[i].path_duration = Exponential(38);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 11: // Pardubice
                 cities[i].name_of_base = "Pardubice";
-                cities[i].time_of_first = Exponential(100);
+                cities[i].path_duration = Exponential(100);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 12: // Prostejov
                 cities[i].name_of_base = "Prostejov";
-                cities[i].time_of_first = Exponential(50);
+                cities[i].path_duration = Exponential(50);
                 cities[i].soldiers = (2 * prapor_min) + (rand() % (2 * prapor_max - 2 * prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 13: // Praslavice
                 cities[i].name_of_base = "Praslavice";
-                cities[i].time_of_first = Exponential(40);
+                cities[i].path_duration = Exponential(40);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 14: // Tabor
                 cities[i].name_of_base = "Tabor";
-                cities[i].time_of_first = Exponential(111);
+                cities[i].path_duration = Exponential(111);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 15: // Zatec
                 cities[i].name_of_base = "Zatec";
-                cities[i].time_of_first = Exponential(192);
+                cities[i].path_duration = Exponential(192);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
