@@ -45,7 +45,10 @@ void SplitArg(const string &str, string &unit, string &number) {
     number = str.substr(found + 1);
 }
 Store warehouse_f("Misto ve skladu", 40);
+Store mechanics ("Mechanicic připravující tatry", 4);
+Facility rampa("Nakladaci rampa");
 int person_ready = 0;
+int city = 0;
 
 class Trans : public Process {
     void Behavior() {
@@ -58,6 +61,29 @@ class Trans : public Process {
             // suit up
             Wait(Exponential(3));
             person_ready++;
+    };
+};
+
+class Vehicle : public Process {
+    void Behavior() {
+        while (1) {
+        // warehouse
+        Enter(mechanics, 1);
+        Wait(Exponential(5));
+        Leave(mechanics, 1);
+        Wait(Exponential(2));
+        Seize(rampa); // postavi se na rampu
+            // bere 40 vojaku
+            for (int a=0; a<40; a++) {
+                _WaitUntil(person_ready>0); // ceka na hotove vojaky
+                person_ready--;
+                Wait(Exponential(10)); // nalozi ji
+            }
+            Release(rampa);
+            Wait(60);
+            city += 40;
+            Wait(60);
+        }
     };
 };
 int main(int argc, char *argv[]) {
@@ -218,7 +244,14 @@ int main(int argc, char *argv[]) {
         (new Trans)->Activate();
     }
 
+    // generate military (300-1500)
+    for (int i=0; i<vehicles; i++){
+        (new Vehicle)->Activate();
+    }
+
     Run();
     warehouse_f.Output();
-    std::cout<<person_ready;
+    mechanics.Output();
+    std::cout<<person_ready<< "\n";
+    std::cout<<city<< "\n";
 }
