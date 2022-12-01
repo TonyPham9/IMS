@@ -44,7 +44,26 @@ void SplitArg(const string &str, string &unit, string &number) {
     unit = str.substr(0, found);
     number = str.substr(found + 1);
 }
+Store warehouse_f("Misto ve skladu", 40);
+int person_ready = 0;
 
+class Trans : public Process {
+    void Behavior() {
+        // prepare cycle
+        while(1){
+            // military entry
+            Wait(Exponential(5));
+            // warehouse
+            Enter(warehouse_f,1);
+            Wait(Exponential(5));
+            Leave(warehouse_f,1);
+            // suit up
+            Wait(Exponential(3));
+            person_ready++;
+            break;
+        }
+    };
+};
 int main(int argc, char *argv[]) {
     // počet základen v poli
     army_base cities[16];
@@ -54,13 +73,14 @@ int main(int argc, char *argv[]) {
     long prapor_min = 900;
     long prapor_max = 3050;
     long vehicles = 40;
+    long time_until_end = 24*60;
 
     char *check;
     int option;
     string unit;
     string  number_of_unit;
     // zkontroluju vsechny argumenty
-    while ((option = getopt(argc, argv, "S:V:")) != -1) {
+    while ((option = getopt(argc, argv, "S:V:T:")) != -1) {
         string parse;
         switch (option) {
             case 'S':
@@ -92,6 +112,9 @@ int main(int argc, char *argv[]) {
             case 'V':
                 vehicles = strtol(optarg, &check, 10);
                 break;
+            case 'T':
+                time_until_end = strtol(optarg, &check, 10);
+                break;
                 // Pokud najdu něco co tam nepaatří.
             default:
                 error_exit(1, "Wrong arguments");
@@ -99,8 +122,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    int i;
-    for (i = 0; i < 16; i++) {
+
+    for (int i = 0; i < 16; i++) {
         srand(i);
         switch (i) {
             case 0: // Bechyne
@@ -192,7 +215,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    for (i = 0; i < 16; i++) {
-        cout << "Soldiers: " << cities[i].soldiers << "\n";
+    Init(0, time_until_end);
+
+    // generate military (300-1500)
+    for (int i=0; i<600; i++){
+        (new Trans)->Activate();
     }
+
+    Run();
+    warehouse_f.Output();
+    std::cout<<person_ready;
 }
