@@ -49,8 +49,6 @@ int person_ready = 0;
 
 class Trans : public Process {
     void Behavior() {
-        // prepare cycle
-        while(1){
             // military entry
             Wait(Exponential(5));
             // warehouse
@@ -60,8 +58,6 @@ class Trans : public Process {
             // suit up
             Wait(Exponential(3));
             person_ready++;
-            break;
-        }
     };
 };
 int main(int argc, char *argv[]) {
@@ -73,7 +69,7 @@ int main(int argc, char *argv[]) {
     long prapor_min = 900;
     long prapor_max = 3050;
     long vehicles = 40;
-    long time_until_end = 24*60;
+    double time_until_end = 24*60;
 
     char *check;
     int option;
@@ -113,7 +109,7 @@ int main(int argc, char *argv[]) {
                 vehicles = strtol(optarg, &check, 10);
                 break;
             case 'T':
-                time_until_end = strtol(optarg, &check, 10);
+                time_until_end = stod(optarg);
                 break;
                 // Pokud najdu něco co tam nepaatří.
             default:
