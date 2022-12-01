@@ -1,53 +1,37 @@
 #include <iostream>
 #include "simlib.h"
 
-Facility warehouse[40];
-Queue Q;
+Store warehouse_f("Misto ve skladu", 40);
+int person_ready = 0;
+
 class Trans : public Process {
     void Behavior() {
-        //double time_start = Time;
-        double equip;
-
-        int place = -1;
-        back:
-        for (int i=0; i<40; i++){
-            if (!warehouse[i].Busy()){ // when is free get position
-                place = i;
-                break;
-            }
+        // prepare cycle
+        while(1){
+            // military entry
+            Wait(Exponential(5));
+            // warehouse
+            Enter(warehouse_f,1);
+            Wait(Exponential(5));
+            Leave(warehouse_f,1);
+            // suit up
+            Wait(Exponential(3));
+            person_ready++;
+            break;
         }
-
-        // if everything is busy back to queue
-        if(place == -1){
-            Into(Q);
-            Passivate();
-            goto back;
-        }
-
-        Seize(warehouse[place]);
-        equip = Exponential(5);
-        Wait(equip);
-        Release(warehouse[place]);
-
-        if (Q.Length()>0){
-            (Q.GetFirst())->Activate(); // planed
-        }
-
-        //sys_time(Time - time_start);
     };
-};
-
-class Generator : public Event {
-    void Behavior() {
-        (new Trans)->Activate();
-        //Activate(Time + Exponential(11));
-    }
 };
 
 int main()
 {
-    Init(0, 100000);
-    (new Generator)->Activate();
-    Run();
+    Init(0, 60);
 
+    // generate military (300-1500)
+    for (int i=0; i<600; i++){
+        (new Trans)->Activate();
+    }
+
+    Run();
+    warehouse_f.Output();
+    std::cout<<person_ready;
 }
