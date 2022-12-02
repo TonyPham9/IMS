@@ -1,14 +1,17 @@
 /**
  * 	Vojenská simulace "mobilizace"
  *
- * @author Alena Klimecká (xklimecXX), Tony Pham (xphamt00)
+ * @author Alena Klimecká (xklimec47), Tony Pham (xphamt00)
  * @version 1.0
  */
 
 #include <iostream>
 #include <getopt.h>
 #include "simlib.h"
+
 using namespace std;
+long vehicles = 40;
+long actual_base = 0;
 
 /**
  * Struktura uchovávajíci data o základně.
@@ -16,10 +19,10 @@ using namespace std;
  * @struct army_base
  */
 typedef struct army_base {
+    string name_of_base;
     long soldiers = 0;
     long vehicles = 0;
-    long time_of_first = 0;
-    long time_of_second = 0;
+    double path_duration = 0;
 } base;
 
 /**
@@ -44,71 +47,93 @@ void SplitArg(const string &str, string &unit, string &number) {
     unit = str.substr(0, found);
     number = str.substr(found + 1);
 }
-Store warehouse_f("Misto ve skladu", 40);
-Store mechanics ("Mechanicic připravující tatry", 4);
-Facility rampa("Nakladaci rampa");
+
+Store warehouse_f("Místo ve skladu", 80);
+Store mechanics("Mechanici připravující tatry", 4);
+Facility platform("Nakládací platforma");
+Histogram prepare_time("Doba přípravy vojáka", 0, 10, 10);
 int person_ready = 0;
 int city = 0;
+// počet základen v poli
+army_base cities[16];
 
 class Trans : public Process {
     void Behavior() {
-            // military entry
-            Wait(Exponential(5));
-            // warehouse
-            Enter(warehouse_f,1);
-            Wait(Exponential(5));
-            Leave(warehouse_f,1);
-            // suit up
-            Wait(Exponential(3));
-            person_ready++;
+        int start_time = Time;
+        // military entry
+        Wait(Exponential(5));
+        // warehouse
+        Enter(warehouse_f, 1);
+        Wait(Exponential(3));
+        Leave(warehouse_f, 1);
+        // suit up
+        Wait(Exponential(3));
+        person_ready++;
+        prepare_time(Time - start_time);
     };
 };
 
 class Vehicle : public Process {
     void Behavior() {
         while (1) {
-        // warehouse
-        Enter(mechanics, 1);
-        Wait(Exponential(5));
-        Leave(mechanics, 1);
-        Wait(Exponential(2));
-        Seize(rampa); // postavi se na rampu
+            // warehouse
+            int check = 0;
+            Enter(mechanics, 1);
+            Wait(Exponential(5));
+            Leave(mechanics, 1);
+            Wait(Exponential(2));
+            Seize(platform); // postavi se na rampu
+
             // bere 40 vojaku
-            for (int a=0; a<40; a++) {
-                _WaitUntil(person_ready>0); // ceka na hotove vojaky
-                person_ready--;
-                Wait(Exponential(10)); // nalozi ji
+            for (int a = 0; a < 40; a++) {
+                check_p:
+                if (person_ready > 0) {
+                    Wait(Exponential(1));
+                    person_ready--;
+                }
+                    // wait 20 min and leave
+                else {
+                    if (check == 20) {
+                        break;
+                    }
+                    Wait(Exponential(1));
+                    check += 1;
+                    goto check_p;
+                }
             }
-            Release(rampa);
-            Wait(60);
+            if (check == 20) {
+                Release(platform);
+                break;
+            }
+
+            Release(platform);
+            Wait(cities[actual_base].path_duration);
             city += 40;
-            Wait(60);
+            Wait(cities[actual_base].path_duration);
         }
     };
 };
+
 int main(int argc, char *argv[]) {
-    // počet základen v poli
-    army_base cities[16];
     // defaultni hodnoty
     long pluk_min = 300;
-    long pluk_max = 1500;
+    long pluk_max = 1250;
     long prapor_min = 900;
-    long prapor_max = 3050;
-    long vehicles = 40;
-    double time_until_end = 24*60;
+    long prapor_max = 2000;
+    double time_until_end = 24 * 60;
 
     char *check;
     int option;
     string unit;
-    string  number_of_unit;
+    string number_of_unit;
     // zkontroluju vsechny argumenty
-    while ((option = getopt(argc, argv, "S:V:T:")) != -1) {
+    while ((option = getopt(argc, argv, "S:V:T:B:")) != -1) {
         string parse;
         switch (option) {
             case 'S':
                 parse = optarg;
                 SplitArg(parse, unit, number_of_unit);
-                if(unit == "pluk_min") {
+                if (unit == "pluk_min") {
                     long tmp = strtol(number_of_unit.c_str(), &check, 10);
                     if (tmp > pluk_max)
                         error_exit(1, "min can not be bigger than max");
@@ -134,6 +159,9 @@ int main(int argc, char *argv[]) {
             case 'V':
                 vehicles = strtol(optarg, &check, 10);
                 break;
+            case 'B':
+                actual_base = strtol(optarg, &check, 10);
+                break;
             case 'T':
                 time_until_end = stod(optarg);
                 break;
@@ -149,86 +177,98 @@ int main(int argc, char *argv[]) {
         srand(i);
         switch (i) {
             case 0: // Bechyne
-                cities[i].time_of_first = 120;
+                cities[i].name_of_base = "Bechyne";
+                cities[i].path_duration = Exponential(120);
                 cities[i].soldiers = (2 * prapor_min) + (rand() % (2 * prapor_max - 2 * prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 1: // Bucovice
-                cities[i].time_of_first = 29;
-                cities[i].time_of_second = 45;
+                cities[i].name_of_base = "Bechyne";
+                cities[i].path_duration = Exponential(29);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 2: // Hranice
-                cities[i].time_of_first = 16;
+                cities[i].name_of_base = "Hranice";
+                cities[i].path_duration = Exponential(16);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 3: // Chrudim
-                cities[i].time_of_first = 87;
+                cities[i].name_of_base = "Chrudim";
+                cities[i].path_duration = Exponential(87);
                 cities[i].soldiers = pluk_min + (rand() % (pluk_max - pluk_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 4: // Jince
-                cities[i].time_of_first = 167;
+                cities[i].name_of_base = "Jince";
+                cities[i].path_duration = Exponential(167);
                 cities[i].soldiers = pluk_min + (rand() % (pluk_max - pluk_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 5: // Jindruchuv_hradec
-                cities[i].time_of_first = 108;
+                cities[i].name_of_base = "Jindruchuv_hradec";
+                cities[i].path_duration = Exponential(108);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 6: // Klatovy
-                cities[i].time_of_first = 220;
+                cities[i].name_of_base = "Klatovy";
+                cities[i].path_duration = Exponential(220);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 7: // Liberec
-                cities[i].time_of_first = 190;
+                cities[i].name_of_base = "Liberec";
+                cities[i].path_duration = Exponential(190);
                 cities[i].soldiers = (2 * prapor_min) + (rand() % (2 * prapor_max - 2 * prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 8: // Lipnik_nad_becvou
-                cities[i].time_of_first = 24;
-                cities[i].time_of_second = 47;
+                cities[i].name_of_base = "Lipnik_nad_becvou";
+                cities[i].path_duration = Exponential(24);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 9: // Olomouc
-                cities[i].time_of_first = 45;
+                cities[i].name_of_base = "Olomouc";
+                cities[i].path_duration = Exponential(45);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 10: // Opava
-                cities[i].time_of_first = 38;
+                cities[i].name_of_base = "Opava";
+                cities[i].path_duration = Exponential(38);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 11: // Pardubice
-                cities[i].time_of_first = 100;
+                cities[i].name_of_base = "Pardubice";
+                cities[i].path_duration = Exponential(100);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 12: // Prostejov
-                cities[i].time_of_first = 83;
-                cities[i].time_of_second = 50;
+                cities[i].name_of_base = "Prostejov";
+                cities[i].path_duration = Exponential(50);
                 cities[i].soldiers = (2 * prapor_min) + (rand() % (2 * prapor_max - 2 * prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 13: // Praslavice
-                cities[i].time_of_first = 52;
-                cities[i].time_of_second = 40;
+                cities[i].name_of_base = "Praslavice";
+                cities[i].path_duration = Exponential(40);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 14: // Tabor
-                cities[i].time_of_first = 111;
+                cities[i].name_of_base = "Tabor";
+                cities[i].path_duration = Exponential(111);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
             case 15: // Zatec
-                cities[i].time_of_first = 192;
+                cities[i].name_of_base = "Zatec";
+                cities[i].path_duration = Exponential(192);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
                 break;
@@ -236,22 +276,20 @@ int main(int argc, char *argv[]) {
                 break;
         }
     }
-
     Init(0, time_until_end);
-
-    // generate military (300-1500)
-    for (int i=0; i<600; i++){
+    person_ready = 0;
+    for (int i = 0; i < cities[actual_base].soldiers; i++) {
         (new Trans)->Activate();
     }
-
-    // generate military (300-1500)
-    for (int i=0; i<vehicles; i++){
+    for (int i = 0; i < vehicles; i++) {
         (new Vehicle)->Activate();
     }
-
     Run();
+
+    std::cout << "Město ve kterém je základna: " << cities[actual_base].name_of_base << "\n";
+    std::cout << "Původní počet vojáků na základně: " << cities[actual_base].soldiers << "\n";
+    std::cout << "Vojáci v cílové destinaci: " << city << "\n";
+    std::cout << "Vojáci co zůstali na základně: " << cities[actual_base].soldiers - city << "\n";
     warehouse_f.Output();
-    mechanics.Output();
-    std::cout<<person_ready<< "\n";
-    std::cout<<city<< "\n";
+    prepare_time.Output();
 }
