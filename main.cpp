@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
                 cities[i].vehicles = vehicles;
                 break;
             case 1: // Bucovice
-                cities[i].name_of_base = "Bechyne";
+                cities[i].name_of_base = "Bucovice";
                 cities[i].path_duration = Exponential(29);
                 cities[i].soldiers = prapor_min + (rand() % (prapor_max - prapor_min));
                 cities[i].vehicles = vehicles;
