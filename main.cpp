@@ -12,6 +12,7 @@
 using namespace std;
 long vehicles = 40;
 long actual_base = 0;
+long capacity = 40;
 
 /**
  * Struktura uchovávajíci data o základně.
@@ -54,10 +55,11 @@ Facility platform("Nakládací platforma");
 Histogram prepare_time("Doba přípravy vojáka", 0, 10, 10);
 int person_ready = 0;
 int city = 0;
+int on_the_way = 0;
 // počet základen v poli
 army_base cities[16];
 
-class Trans : public Process {
+class Soldier : public Process {
     void Behavior() {
         int start_time = Time;
         // military entry
@@ -84,11 +86,11 @@ class Vehicle : public Process {
             Wait(Exponential(2));
             Seize(platform); // postavi se na rampu
 
-            // bere 40 vojaku
-            for (int a = 0; a < 40; a++) {
+            // bere X (v základu 40) vojaku
+            for (int a = 0; a < capacity; a++) {
                 check_p:
                 if (person_ready > 0) {
-                    Wait(Exponential(1));
+                    Wait(Exponential(0.25));
                     person_ready--;
                 }
                     // wait 20 min and leave
@@ -107,8 +109,10 @@ class Vehicle : public Process {
             }
 
             Release(platform);
+            on_the_way +=capacity;
             Wait(cities[actual_base].path_duration);
-            city += 40;
+            on_the_way -=capacity;
+            city += capacity;
             Wait(cities[actual_base].path_duration);
         }
     };
@@ -127,7 +131,7 @@ int main(int argc, char *argv[]) {
     string unit;
     string number_of_unit;
     // zkontroluju vsechny argumenty
-    while ((option = getopt(argc, argv, "S:V:T:B:")) != -1) {
+    while ((option = getopt(argc, argv, "S:V:T:B:C:")) != -1) {
         string parse;
         switch (option) {
             case 'S':
@@ -164,6 +168,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 'T':
                 time_until_end = stod(optarg);
+                break;
+            case 'C':
+                capacity = strtol(optarg, &check, 10);
                 break;
                 // Pokud najdu něco co tam nepaatří.
             default:
@@ -279,7 +286,7 @@ int main(int argc, char *argv[]) {
     Init(0, time_until_end);
     person_ready = 0;
     for (int i = 0; i < cities[actual_base].soldiers; i++) {
-        (new Trans)->Activate();
+        (new Soldier)->Activate();
     }
     for (int i = 0; i < vehicles; i++) {
         (new Vehicle)->Activate();
@@ -289,7 +296,8 @@ int main(int argc, char *argv[]) {
     std::cout << "Město ve kterém je základna: " << cities[actual_base].name_of_base << "\n";
     std::cout << "Původní počet vojáků na základně: " << cities[actual_base].soldiers << "\n";
     std::cout << "Vojáci v cílové destinaci: " << city << "\n";
-    std::cout << "Vojáci co zůstali na základně: " << cities[actual_base].soldiers - city << "\n";
+    std::cout << "Vojáci na cestě do cíle: " << on_the_way << "\n";
+    std::cout << "Vojáci co zůstali na základně: " << cities[actual_base].soldiers - city - on_the_way << "\n";
     warehouse_f.Output();
     prepare_time.Output();
 }

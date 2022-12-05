@@ -3,7 +3,7 @@ CFLAGS=-pedantic -Wall -Werror -std=gnu99 -lsimlib
 FILE=main
 COMPILE_FILES=main.cpp
 
-all:
+build:
 	$(CC) $(FLAGS) $(COMPILE_FILES) -o $(FILE) -lsimlib
 
 run:
